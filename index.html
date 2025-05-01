@@ -13,6 +13,12 @@
         textarea {
             resize: vertical;
         }
+        /* Custom style for modal image to prevent overflow */
+        .modal-image {
+            max-width: 100%;
+            max-height: calc(100vh - 8rem); /* Adjust if needed, leaving space for padding */
+            object-fit: contain; /* Ensures the image scales nicely */
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
@@ -141,9 +147,24 @@ server.handleClient();
 
         <div class="mt-10 text-center">
             <h3 class="text-2xl font-semibold mb-4">Circuit Schematic</h3>
-            <img src="circuit_image.png" alt="Circuit Schematic" class="mx-auto max-w-lg rounded-lg shadow-md" />
+                        <div class="relative inline-block cursor-pointer group" id="circuit-image-container">
+                <img src="circuit_image.png" alt="Circuit Schematic" class="mx-auto max-w-xl rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105" id="circuit-image"/>
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 transition-opacity duration-300 flex items-center justify-center rounded-lg group-hover:opacity-100" id="fullscreen-overlay">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-5 11v4m0 0H7m0 0l-5-5m11 5h4m0 0v-4m0 4l5-5"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
     </main>
+
+    <div id="fullscreen-modal" class="fixed inset-0 bg-black bg-opacity-90 hidden flex items-center justify-center z-50 p-4">
+        <div class="relative">
+            <img src="" alt="Circuit Schematic Fullscreen" class="modal-image rounded-lg" id="modal-circuit-image"/>
+            <button id="close-modal" class="absolute top-4 right-4 text-white text-4xl leading-none hover:text-gray-300 focus:outline-none">&times;</button>
+        </div>
+    </div>
+
 
     <script>
         const networkIdInput = document.getElementById('network-id');
@@ -170,6 +191,48 @@ server.handleClient();
                 console.error('Failed to copy code: ', err);
             });
         }
+
+        // --- Fullscreen Modal Script ---
+        const circuitImageContainer = document.getElementById('circuit-image-container');
+        const circuitImage = document.getElementById('circuit-image');
+        const fullscreenModal = document.getElementById('fullscreen-modal');
+        const modalCircuitImage = document.getElementById('modal-circuit-image');
+        const closeModalButton = document.getElementById('close-modal');
+        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+
+
+        // Open modal
+        fullscreenOverlay.addEventListener('click', () => {
+            modalCircuitImage.src = circuitImage.src; // Set modal image source
+            fullscreenModal.classList.remove('hidden'); // Show the modal
+            // Optional: Add overflow-hidden to body to prevent scrolling
+             document.body.style.overflow = 'hidden';
+        });
+
+        // Close modal function
+        function closeModal() {
+            fullscreenModal.classList.add('hidden'); // Hide the modal
+            // Optional: Restore body scrolling
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on button click
+        closeModalButton.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside the image (on the backdrop)
+        fullscreenModal.addEventListener('click', (event) => {
+            // Check if the click target is the modal background itself, not the image or close button
+            if (event.target === fullscreenModal) {
+                closeModal();
+            }
+        });
+
+        // Optional: Close modal on Escape key press
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !fullscreenModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
     </script>
 
 </body>
